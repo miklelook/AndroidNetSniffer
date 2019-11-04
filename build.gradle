@@ -1,19 +1,19 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
+configure(subprojects.findAll { it.hasProperty("POM_NAME") }) {
+    apply from: "${rootDir}/push.gradle"
+}
+
 ext {
     //Android
     android = [
             compileSdkVersion: 28,
             minSdkVersion    : 21,
             targetSdkVersion : 28,
-            versionCode      : 20,
-            versionName      : '2.0.0'
     ]
 }
 buildscript {
     repositories {
-        maven {
-            url 'http://172.19.167.91:8081/repository/maven-public/'
-        }
+
         google()
         jcenter()
 
@@ -37,6 +37,3 @@ allprojects {
     }
 }
 
-task clean(type: Delete) {
-    delete rootProject.buildDir
-}
