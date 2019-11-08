@@ -1,4 +1,4 @@
-package com.zanfou.polaris;
+package com.zanfou.vpn;
 
 import org.junit.Test;
 

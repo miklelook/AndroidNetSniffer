@@ -7,9 +7,10 @@ android {
         targetSdkVersion rootProject.ext.android.targetSdkVersion
         versionCode Integer.parseInt(VERSION_CODE)
         versionName VERSION_NAME
-
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles 'consumer-rules.pro'
+
+        applicationId "com.zanfou.vpn"
     }
     buildTypes {
         release {
@@ -26,5 +27,4 @@ dependencies {
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
 
-    implementation project(":polaris-api")
 }
