@@ -30,6 +30,5 @@ dependencies {
 
     testImplementation 'junit:junit:4.12'
 
-    compileOnly "com.squareup.okhttp3:logging-interceptor:4.2.0"
     compileOnly "com.squareup.okhttp3:okhttp:4.2.0"
 }
