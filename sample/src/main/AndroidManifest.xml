@@ -1,7 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:dist="http://schemas.android.com/apk/distribution"
-    package="com.zanfou.polaris">
+    package="com.zanfou.vpn">
 
+    <uses-permission android:name="android.permission.INTERNET" />
     <dist:module dist:instant="true" />
     <application
         android:allowBackup="true"

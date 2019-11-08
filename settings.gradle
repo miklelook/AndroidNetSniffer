@@ -1,4 +1,3 @@
-rootProject.name = 'polaris'
 include ':sample',
-        ':polaris-api'
+        ':library'
 

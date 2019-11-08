@@ -1,4 +1,4 @@
-package com.zanfou.polaris;
+package com.zanfou.vpn;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
