@@ -1,6 +1,4 @@
 rootProject.name = 'polaris'
 include ':sample',
-        ':polaris-compiler',
-        ':polaris-annotation',
         ':polaris-api'
 
