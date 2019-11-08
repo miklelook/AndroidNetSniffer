@@ -1,6 +1,2 @@
 <resources>
-    <string name="app_name">polaris-api</string>
-
-    <string name="app_scheme">zanfou</string>
-    <string name="app_authority">www.zanfou.com</string>
 </resources>
