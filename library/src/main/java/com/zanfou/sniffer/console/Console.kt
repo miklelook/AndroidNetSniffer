@@ -122,7 +122,7 @@ object Console {
                 }
                 val item = getItem(position)
                 view?.findViewById<TextView>(R.id.tv_title)?.text = item.url?.toString() ?: ""
-                view?.findViewById<TextView>(R.id.tv_id)?.text = "${position + 1}-${item.id}-"
+                view?.findViewById<TextView>(R.id.tv_id)?.text = "${position}-${item.id}-"
 
                 var upX = 0f
                 var downX = 0f
