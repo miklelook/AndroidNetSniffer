@@ -1,0 +1,5 @@
+<resources>
+    <color name="console_text">#8AF539</color>
+    <color name="list_divider">#558AF539</color>
+    <dimen name="console_text">11sp</dimen>
+</resources>
