@@ -1,7 +1,8 @@
-package com.zanfou.vpn
+package com.zanfou.sniffer
 
 import android.app.Activity
 import android.os.Bundle
+import com.zanfou.sniffer.console.Console
 import kotlinx.android.synthetic.main.activity_main.*
 import okhttp3.*
 import java.io.IOException
@@ -26,26 +27,27 @@ class MainActivity : Activity() {
                     .addNetworkInterceptor(OkHttpLogInterceptor().apply {
                         level = OkHttpLogInterceptor.Level.BODY
                     })
+                    .addNetworkInterceptor(OkHttpSniffer())
                     .build()
                     .newCall(Request.Builder().url("http://172.19.167.91:7300/mock/5d78a6a96460dbf9f53e2290/api/dynamic/list/productDynamic.json").build())
                     .enqueue(object : Callback {
                         override fun onFailure(call: Call, e: IOException) {
                             runOnUiThread {
-                                et_result.text = e.message
+                                et_result.text = "正在失败..."
                             }
                         }
 
                         @Throws(IOException::class)
                         override fun onResponse(call: Call, response: Response) {
-                            val readText = response.body?.charStream()?.readText()
                             runOnUiThread {
-                                et_result.text = readText
+                                et_result.text = "正在完成..."
                             }
                         }
                     })
         }
+
         btn_clear.setOnClickListener {
-            et_result.text = ""
+            Console.showConsole(application)
         }
     }
 }

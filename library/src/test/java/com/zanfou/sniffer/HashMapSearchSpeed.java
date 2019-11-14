@@ -1,4 +1,4 @@
-package com.zanfou.vpn;
+package com.zanfou.sniffer;
 
 import org.junit.Test;
 

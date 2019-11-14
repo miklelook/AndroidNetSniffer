@@ -1,4 +1,4 @@
-package com.zanfou.vpn;
+package com.zanfou.sniffer;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
