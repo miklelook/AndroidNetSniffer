@@ -11,9 +11,7 @@ import android.os.Handler
 import android.os.Looper
 import android.util.TypedValue
 import android.view.*
-import android.widget.BaseAdapter
-import android.widget.ListView
-import android.widget.TextView
+import android.widget.*
 import com.zanfou.sniffer.R
 import com.zanfou.sniffer.cache.OnSniffListener
 import com.zanfou.sniffer.cache.RequestCache
@@ -70,7 +68,7 @@ object Console {
         layoutParams.gravity = Gravity.TOP
         layoutParams.x = 0
         layoutParams.y = 0
-        contentView = getView(context)
+        contentView = getContentView(context)
         contentView?.setOnTouchListener(object : View.OnTouchListener {
             private var x: Int = 0
             private var y: Int = 0
@@ -105,55 +103,20 @@ object Console {
     }
 
     private var listView: ListView? = null
-    private var tvDetail: TextView? = null
-    private fun getView(context: Context): View {
-        val contentView = LayoutInflater.from(context).inflate(R.layout.layout_console, null)
+    private fun getContentView(context: Context): View {
+        val inflater = LayoutInflater.from(context)
+        val contentView = inflater.inflate(R.layout.layout_console, null)
         listView = contentView.findViewById(R.id.list_view)
         contentView.findViewById<TextView>(R.id.tv_close).setOnClickListener {
             hideConsole()
         }
-        tvDetail = contentView.findViewById(R.id.tv_detail)
+        contentView.findViewById<FrameLayout>(R.id.fl_content).addView(inflater.inflate(R.layout.adapter_text_view, null), ViewGroup.LayoutParams(-1, -1))
+        val tvDetail = contentView.findViewById<TextView>(R.id.tv_detail)
         listView?.isStackFromBottom = true
-        listView?.adapter = object : BaseAdapter() {
-            override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
-                var view = convertView
-                if (view === null) {
-                    view = LayoutInflater.from(parent?.context).inflate(R.layout.adapter_request, null, false)
-                }
-                val item = getItem(position)
-                view?.findViewById<TextView>(R.id.tv_title)?.text = item.url?.toString() ?: ""
-                view?.findViewById<TextView>(R.id.tv_id)?.text = "${position}-${item.id}-"
-
-                var upX = 0f
-                var downX = 0f
-                view?.setOnTouchListener { _, event ->
-                    if (event.actionMasked == MotionEvent.ACTION_DOWN) {
-                        downX = event.x
-                        upX = 0f
-                    } else if (event.actionMasked == MotionEvent.ACTION_UP && abs(upX - downX) < 5f) {
-                        val snifferRequestLog = RequestCache.requestValues[position]
-                        tvDetail?.text = "RequestId:${snifferRequestLog.id}\n\nUrl:${snifferRequestLog.url.toString()}\n\n${snifferRequestLog.response?.textBody.toString()}"
-                        return@setOnTouchListener true
-                    } else if (event.actionMasked == MotionEvent.ACTION_MOVE) {
-                        upX = event.x
-                    }
-                    return@setOnTouchListener false
-                }
-                return view!!
-            }
-
-            override fun getItem(position: Int): SnifferRequestLog {
-                return RequestCache.requestValues[position]
-            }
-
-            override fun getItemId(position: Int): Long {
-                return position.toLong()
-            }
-
-            override fun getCount(): Int {
-                return RequestCache.requestKeys.size
-            }
-        }
+        listView?.adapter = RequestListViewAdapter(AdapterView.OnItemClickListener { parent, view, position, id ->
+            val snifferRequestLog = RequestCache.requestValues[position]
+            tvDetail?.text = "RequestId:${snifferRequestLog.id}\n\nUrl:${snifferRequestLog.url.toString()}\n\n${snifferRequestLog.response?.textBody.toString()}"
+        })
         return contentView
     }
 
@@ -167,5 +130,46 @@ object Console {
             windowManager?.removeView(it)
         }
         isShowing = false
+    }
+}
+
+class RequestListViewAdapter(var onItemClickListener: AdapterView.OnItemClickListener? = null) : BaseAdapter() {
+
+    override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
+        var view = convertView
+        if (view === null) {
+            view = LayoutInflater.from(parent?.context).inflate(R.layout.adapter_request, null, false)
+        }
+        val item = getItem(position)
+        view?.findViewById<TextView>(R.id.tv_title)?.text = item.url?.toString() ?: ""
+        view?.findViewById<TextView>(R.id.tv_id)?.text = "${position}-${item.id}-"
+
+        var upX = 0f
+        var downX = 0f
+        view?.setOnTouchListener { v, event ->
+            if (event.actionMasked == MotionEvent.ACTION_DOWN) {
+                downX = event.x
+                upX = 0f
+            } else if (event.actionMasked == MotionEvent.ACTION_UP && abs(upX - downX) < 5f) {
+                onItemClickListener?.onItemClick(v.parent as AdapterView<*>?, v, position, getItemId(position))
+                return@setOnTouchListener true
+            } else if (event.actionMasked == MotionEvent.ACTION_MOVE) {
+                upX = event.x
+            }
+            return@setOnTouchListener false
+        }
+        return view!!
+    }
+
+    override fun getItem(position: Int): SnifferRequestLog {
+        return RequestCache.requestValues[position]
+    }
+
+    override fun getItemId(position: Int): Long {
+        return position.toLong()
+    }
+
+    override fun getCount(): Int {
+        return RequestCache.requestKeys.size
     }
 }
