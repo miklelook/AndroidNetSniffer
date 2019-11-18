@@ -85,7 +85,7 @@
         android:background="@color/console_text" />
 
     <FrameLayout
-        android:id="@+id/fl_content"
+        android:id="@+id/fl_detail"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="3" />
