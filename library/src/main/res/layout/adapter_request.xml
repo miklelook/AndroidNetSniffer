@@ -6,29 +6,13 @@
     android:orientation="vertical"
     android:scrollbars="none">
 
-    <LinearLayout
+    <TextView
+        android:id="@+id/tv_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="3dp">
-
-        <TextView
-            android:id="@+id/tv_id"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:singleLine="true"
-            android:textColor="@color/console_text"
-            android:textSize="@dimen/console_text"
-            tools:text="111" />
-
-        <TextView
-            android:id="@+id/tv_title"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:singleLine="true"
-            android:textColor="@color/console_text"
-            android:textSize="@dimen/console_text"
-            tools:text="111" />
-
-    </LinearLayout>
+        android:padding="3dp"
+        android:singleLine="true"
+        android:textColor="@color/console_text"
+        android:textSize="@dimen/console_text"
+        tools:text="111" />
 </HorizontalScrollView>

@@ -20,18 +20,16 @@ import kotlin.math.abs
 
 
 /**
- * @author shuxin.wei email:weishuxin@maoyan.com
- * @version v1.0.0
- * @date 2019-11-12
+ * v1.0 of the file created on 2019-11-18 by shuxin.wei, email: weishuxin@maoyan.com
+ * description: todo
  */
-@SuppressLint("StaticFieldLeak")
+@SuppressLint("StaticFieldLeak", "ClickableViewAccessibility", "SetTextI18n", "InflateParams")
 object Console {
     private var isShowing = false
     private var contentView: View? = null
     private var windowManager: WindowManager? = null
     private val handler = Handler(Looper.getMainLooper())
     private val layoutParams = WindowManager.LayoutParams()
-    @SuppressLint("ClickableViewAccessibility")
     fun showConsole(context: Application) {
         if (isShowing) {
             return
@@ -82,7 +80,6 @@ object Console {
                     MotionEvent.ACTION_MOVE -> {
                         val nowX = event.rawX.toInt()
                         val nowY = event.rawY.toInt()
-                        val movedX = nowX - x
                         val movedY = nowY - y
                         x = nowX
                         y = nowY
@@ -106,16 +103,19 @@ object Console {
     private fun getContentView(context: Context): View {
         val inflater = LayoutInflater.from(context)
         val contentView = inflater.inflate(R.layout.layout_console, null)
+        val detailView = contentView.findViewById<FrameLayout>(R.id.fl_detail)
+
         listView = contentView.findViewById(R.id.list_view)
         contentView.findViewById<TextView>(R.id.tv_close).setOnClickListener {
             hideConsole()
         }
-        contentView.findViewById<FrameLayout>(R.id.fl_content).addView(inflater.inflate(R.layout.adapter_text_view, null), ViewGroup.LayoutParams(-1, -1))
-        val tvDetail = contentView.findViewById<TextView>(R.id.tv_detail)
+
         listView?.isStackFromBottom = true
         listView?.adapter = RequestListViewAdapter(AdapterView.OnItemClickListener { parent, view, position, id ->
             val snifferRequestLog = RequestCache.requestValues[position]
-            tvDetail?.text = "RequestId:${snifferRequestLog.id}\n\nUrl:${snifferRequestLog.url.toString()}\n\n${snifferRequestLog.response?.textBody.toString()}"
+            detailView.removeAllViews()
+            detailView.addView(inflater.inflate(R.layout.adapter_text_view, null), ViewGroup.LayoutParams(-1, -1))
+            detailView.findViewById<TextView>(R.id.tv_detail).text = "RequestId:${snifferRequestLog.id}\n\nUrl:${snifferRequestLog.url.toString()}\n\n${snifferRequestLog.response?.textBody.toString()}"
         })
         return contentView
     }
@@ -128,12 +128,14 @@ object Console {
         handler.removeCallbacksAndMessages(null)
         contentView?.let {
             windowManager?.removeView(it)
+            contentView = null
         }
         isShowing = false
     }
 }
 
-class RequestListViewAdapter(var onItemClickListener: AdapterView.OnItemClickListener? = null) : BaseAdapter() {
+@SuppressLint("SetTextI18n", "InflateParams")
+class RequestListViewAdapter @JvmOverloads constructor(var onItemClickListener: AdapterView.OnItemClickListener? = null) : BaseAdapter() {
 
     override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
         var view = convertView
@@ -141,8 +143,7 @@ class RequestListViewAdapter(var onItemClickListener: AdapterView.OnItemClickLis
             view = LayoutInflater.from(parent?.context).inflate(R.layout.adapter_request, null, false)
         }
         val item = getItem(position)
-        view?.findViewById<TextView>(R.id.tv_title)?.text = item.url?.toString() ?: ""
-        view?.findViewById<TextView>(R.id.tv_id)?.text = "${position}-${item.id}-"
+        view?.findViewById<TextView>(R.id.tv_title)?.text = "${position}-${item.id}-${item.url?.toString()}"
 
         var upX = 0f
         var downX = 0f
