@@ -1,5 +1,22 @@
 <resources>
-    <color name="console_text">#8AF539</color>
-    <color name="list_divider">#558AF539</color>
-    <dimen name="console_text">11sp</dimen>
+    <color name="sniffer_console_text">#8AF539</color>
+    <color name="sniffer_list_divider">#558AF539</color>
+    <color name="sniffer_background">#aa000000</color>
+
+    <dimen name="sniffer__console_text">11sp</dimen>
+
+    <style name="SnifferTabItem" parent="android:Widget.TextView">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textColor">@color/sniffer_console_text</item>
+        <item name="android:textSize">@dimen/sniffer__console_text</item>
+        <item name="android:colorControlNormal">@color/sniffer_list_divider</item>
+        <item name="android:colorControlActivated">@color/sniffer_console_text</item>
+    </style>
+
+    <item name="sniffer_id_headers" type="id" />
+    <item name="sniffer_id_request" type="id" />
+    <item name="sniffer_id_response" type="id" />
 </resources>

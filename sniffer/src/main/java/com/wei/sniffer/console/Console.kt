@@ -2,175 +2,238 @@ package com.wei.sniffer.console
 
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.app.Application
 import android.content.Context
-import android.content.pm.PackageManager
-import android.graphics.PixelFormat
-import android.os.Build
+import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.util.TypedValue
-import android.view.*
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.view.WindowManager
 import android.widget.*
 import com.wei.sniffer.R
 import com.wei.sniffer.cache.OnSniffListener
 import com.wei.sniffer.cache.RequestCache
-import com.wei.sniffer.cache.SnifferRequestLog
-import kotlin.math.abs
+import com.wei.sniffer.cache.SnifferLog
 
 
 /**
  * v1.0 of the file created on 2019-11-18 by shuxin.wei, email: weishuxin@maoyan.com
- * description: todo
+ * description: 网络请求Sniffer控制台展示
  */
 @SuppressLint("StaticFieldLeak", "ClickableViewAccessibility", "SetTextI18n", "InflateParams")
-object Console {
+class Console {
+    companion object {
+        val instance: Console by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+            Console()
+        }
+    }
+
+    private var isOpened = false
     private var isShowing = false
-    private var contentView: View? = null
-    private var windowManager: WindowManager? = null
+    private var rootView: View? = null
+    private lateinit var windowManager: WindowManager
     private val handler = Handler(Looper.getMainLooper())
-    private val layoutParams = WindowManager.LayoutParams()
-    fun showConsole(context: Application) {
-        if (isShowing) {
+    private lateinit var listViewAdapter: RequestListViewAdapter
+    private lateinit var layoutParams: WindowManager.LayoutParams
+    private var currentTabIndex = -1
+    private var aliveActivityCount = 0
+    private var context: Application? = null
+    private val activityLifecycleCallbacks = object : Application.ActivityLifecycleCallbacks {
+        override fun onActivityPaused(activity: Activity?) {
+        }
+
+        override fun onActivityResumed(activity: Activity?) {
+        }
+
+        override fun onActivityStarted(activity: Activity?) {
+            aliveActivityCount++
+            if (aliveActivityCount >= 0 && isOpened && !isShowing) {
+                showConsole()
+                isShowing = true
+            }
+        }
+
+        override fun onActivityDestroyed(activity: Activity?) {
+        }
+
+        override fun onActivitySaveInstanceState(activity: Activity?, outState: Bundle?) {
+        }
+
+        override fun onActivityStopped(activity: Activity?) {
+            aliveActivityCount--
+            if (aliveActivityCount <= 0 && isOpened && isShowing) {
+                hideConsole()
+                isShowing = false
+            }
+        }
+
+        override fun onActivityCreated(activity: Activity?, savedInstanceState: Bundle?) {
+        }
+    }
+
+    /**
+     * 开启Console
+     */
+    fun openConsole(context: Application) {
+        if (isOpened) {
             return
         }
+        this.context = context
+        context.registerActivityLifecycleCallbacks(activityLifecycleCallbacks)
         RequestCache.onSniffListener = object : OnSniffListener {
-            override fun onSniff(snifferRequestLog: SnifferRequestLog) {
+            override fun onNotifyDataChanged(snifferLog: SnifferLog) {
                 handler.post {
-                    updateConsole()
+                    updateConsole(snifferLog)
                 }
             }
         }
+        rootView = initConsoleView(context)
 
-        // 获取WindowManager服务
-        windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-
-        // 设置LayoutParam
-        layoutParams.width = WindowManager.LayoutParams.WRAP_CONTENT
-        layoutParams.height = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 400f, context.resources.displayMetrics).toInt()
-        layoutParams.format = PixelFormat.TRANSLUCENT// 支持透明
-        // mParams.format = PixelFormat.RGBA_8888;
-        layoutParams.flags = layoutParams.flags.or(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            layoutParams.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) { /*android7.0不能用TYPE_TOAST*/
-            layoutParams.type = WindowManager.LayoutParams.TYPE_PHONE
-        } else { /*以下代码块使得android6.0之后的用户不必再去手动开启悬浮窗权限*/
-            if (PackageManager.PERMISSION_GRANTED == context.packageManager.checkPermission("android.permission.SYSTEM_ALERT_WINDOW", context.packageName)) {
-                layoutParams.type = WindowManager.LayoutParams.TYPE_PHONE
-            } else {
-                layoutParams.type = WindowManager.LayoutParams.TYPE_TOAST
-            }
+        rootView?.let {
+            selectTab(it, currentTabIndex, null)
+            windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+            layoutParams = windowManager.initDragWindow(it, it.findViewById(R.id.rl_header))
         }
-        layoutParams.gravity = Gravity.TOP
-        layoutParams.x = 0
-        layoutParams.y = 0
-        contentView = getContentView(context)
-        contentView?.setOnTouchListener(object : View.OnTouchListener {
-            private var x: Int = 0
-            private var y: Int = 0
-
-            override fun onTouch(view: View, event: MotionEvent): Boolean {
-                when (event.action) {
-                    MotionEvent.ACTION_DOWN -> {
-                        x = event.rawX.toInt()
-                        y = event.rawY.toInt()
-                    }
-                    MotionEvent.ACTION_MOVE -> {
-                        val nowX = event.rawX.toInt()
-                        val nowY = event.rawY.toInt()
-                        val movedY = nowY - y
-                        x = nowX
-                        y = nowY
-                        layoutParams.y = layoutParams.y + movedY
-
-                        // 更新悬浮窗控件布局
-                        windowManager?.updateViewLayout(view, layoutParams)
-                    }
-                    else -> {
-                    }
-                }
-                return false
-            }
-        })
-        // 将悬浮窗控件添加到WindowManager
-        windowManager?.addView(contentView, layoutParams)
-        isShowing = true
+        isOpened = true
+        showConsole()
     }
 
-    private var listView: ListView? = null
-    private fun getContentView(context: Context): View {
+    private fun initConsoleView(context: Context): View {
         val inflater = LayoutInflater.from(context)
-        val contentView = inflater.inflate(R.layout.layout_console, null)
-        val detailView = contentView.findViewById<FrameLayout>(R.id.fl_detail)
-
-        listView = contentView.findViewById(R.id.list_view)
-        contentView.findViewById<TextView>(R.id.tv_close).setOnClickListener {
-            hideConsole()
+        val rootView = inflater.inflate(R.layout.sniffer_layout_console, null)
+        val listView = rootView.findViewById<ListView>(R.id.list_view)
+        rootView.findViewById<View>(R.id.tv_close).setOnClickListener {
+            closeConsole()
         }
-
         listView?.isStackFromBottom = true
-        listView?.adapter = RequestListViewAdapter(AdapterView.OnItemClickListener { parent, view, position, id ->
-            val snifferRequestLog = RequestCache.requestValues[position]
-            detailView.removeAllViews()
-            detailView.addView(inflater.inflate(R.layout.adapter_text_view, null), ViewGroup.LayoutParams(-1, -1))
-            detailView.findViewById<TextView>(R.id.tv_detail).text = "RequestId:${snifferRequestLog.id}\n\nUrl:${snifferRequestLog.url.toString()}\n\n${snifferRequestLog.response?.textBody.toString()}"
+        listViewAdapter = RequestListViewAdapter(AdapterView.OnItemClickListener { _, view, position, _ ->
+            val snifferLog = listViewAdapter.getItem(position)
+            if (snifferLog !== listViewAdapter.temp) {
+                listViewAdapter.temp = snifferLog
+                resetConsoleDetailView()
+                updateDetailContent(snifferLog, 0)
+                listViewAdapter.notifyDataSetChanged()
+            }
         })
-        return contentView
+
+        listView?.adapter = listViewAdapter
+        return rootView
     }
 
-    private fun updateConsole() {
-        (listView?.adapter as BaseAdapter).notifyDataSetChanged()
+    /**
+     * 重置控制台详情展示区
+     */
+    private fun resetConsoleDetailView() {
+        rootView?.let {
+            val contentView = it.findViewById<FrameLayout>(R.id.fl_content)
+            contentView.removeAllViews()
+            val context = contentView.context
+            //add Headers View
+            contentView.addView(HeadersView(context), ViewGroup.LayoutParams(-1, -1))
+            //add Request View
+        }
     }
 
-    private fun hideConsole() {
+    /**
+     * 更新Console
+     */
+    private fun updateConsole(snifferLog: SnifferLog) {
+        listViewAdapter.notifyDataSetChanged()
+        //已有选中，则更新详细内容
+        updateDetailContent(snifferLog, currentTabIndex)
+    }
+
+    /**
+     * 关闭Console
+     */
+    private fun closeConsole() {
         handler.removeCallbacksAndMessages(null)
-        contentView?.let {
-            windowManager?.removeView(it)
-            contentView = null
+        context?.unregisterActivityLifecycleCallbacks(activityLifecycleCallbacks)
+        hideConsole()
+        clear()
+        isOpened = false
+    }
+
+    /**
+     * 隐藏Console
+     */
+    private fun hideConsole() {
+        rootView?.let {
+            windowManager.hideView(it)
         }
         isShowing = false
     }
-}
 
-@SuppressLint("SetTextI18n", "InflateParams")
-class RequestListViewAdapter @JvmOverloads constructor(var onItemClickListener: AdapterView.OnItemClickListener? = null) : BaseAdapter() {
+    /**
+     * 显示Console
+     */
+    private fun showConsole() {
+        windowManager.addView(rootView, layoutParams)
+        isShowing = true
+    }
 
-    override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
-        var view = convertView
-        if (view === null) {
-            view = LayoutInflater.from(parent?.context).inflate(R.layout.adapter_request, null, false)
-        }
-        val item = getItem(position)
-        view?.findViewById<TextView>(R.id.tv_title)?.text = "${position}-${item.id}-${item.url?.toString()}"
+    /**
+     * 更新控制台详细内容
+     */
+    private fun updateDetailContent(snifferLog: SnifferLog, selectIndex: Int) {
+        rootView?.let { selectTab(it, selectIndex, snifferLog) }
+    }
 
-        var upX = 0f
-        var downX = 0f
-        view?.setOnTouchListener { v, event ->
-            if (event.actionMasked == MotionEvent.ACTION_DOWN) {
-                downX = event.x
-                upX = 0f
-            } else if (event.actionMasked == MotionEvent.ACTION_UP && abs(upX - downX) < 5f) {
-                onItemClickListener?.onItemClick(v.parent as AdapterView<*>?, v, position, getItemId(position))
-                return@setOnTouchListener true
-            } else if (event.actionMasked == MotionEvent.ACTION_MOVE) {
-                upX = event.x
+    /**
+     * Tab选择
+     */
+    private fun selectTab(rootView: View, selectIndex: Int, snifferLog: SnifferLog?) {
+        val contentView = rootView.findViewById<FrameLayout>(R.id.fl_content)
+        val headersView = contentView.findViewById<HeadersView>(R.id.sniffer_id_headers)
+        val requestView = contentView.findViewById<View>(R.id.sniffer_id_request)
+        val responseView = contentView.findViewById<View>(R.id.sniffer_id_response)
+
+        headersView?.notifyDataChanged(snifferLog)
+
+        if (selectIndex == 1) {
+            requestView?.let {
+
             }
-            return@setOnTouchListener false
         }
-        return view!!
+
+        if (selectIndex == 2) {
+            responseView?.let {
+
+            }
+        }
+
+        headersView?.visibility = if (selectIndex == 0) View.VISIBLE else View.GONE
+        requestView?.visibility = if (selectIndex == 1) View.VISIBLE else View.GONE
+        responseView?.visibility = if (selectIndex == 2) View.VISIBLE else View.GONE
+        if (currentTabIndex == selectIndex) {
+            return
+        }
+        currentTabIndex = selectIndex
+        val tabLayout = rootView.findViewById<LinearLayout>(R.id.ll_tab)
+        for (index in 0 until tabLayout.childCount) {
+            val childAt = tabLayout.getChildAt(index) as TextView
+            if (index == selectIndex) {
+                childAt.setBackgroundColor(tabLayout.context.resources.getColor(R.color.sniffer_list_divider))
+                childAt.setTextColor(tabLayout.context.resources.getColor(R.color.sniffer_background))
+            } else {
+                childAt.background = null
+                childAt.setTextColor(tabLayout.context.resources.getColor(R.color.sniffer_console_text))
+            }
+
+            childAt.setOnClickListener {
+                selectTab(rootView, index, snifferLog)
+            }
+        }
     }
 
-    override fun getItem(position: Int): SnifferRequestLog {
-        return RequestCache.requestValues[position]
-    }
-
-    override fun getItemId(position: Int): Long {
-        return position.toLong()
-    }
-
-    override fun getCount(): Int {
-        return RequestCache.requestKeys.size
+    /**
+     * 清除数据
+     */
+    private fun clear() {
+        rootView = null
+        context = null
     }
 }

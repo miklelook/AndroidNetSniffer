@@ -10,11 +10,8 @@ import okhttp3.*
 import java.io.IOException
 
 /**
- * @author shuxin.wei email:weishuxin@maoyan.com
- * @version v1.0.0
- * @date 2019-10-31
- *
- * 请求拦截
+ * v1.0 of the file created on 2019-11-28 by shuxin.wei, email: weishuxin@maoyan.com
+ * description: 请求拦截
  */
 class MainActivity : Activity() {
 
@@ -49,7 +46,8 @@ class MainActivity : Activity() {
         }
 
         btn_clear.setOnClickListener {
-            Console.showConsole(application)
+            Console.instance.openConsole(application)
         }
+
     }
 }

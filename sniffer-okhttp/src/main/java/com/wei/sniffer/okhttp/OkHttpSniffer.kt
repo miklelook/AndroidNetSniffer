@@ -1,9 +1,6 @@
 package com.wei.sniffer.okhttp
 
-import com.wei.sniffer.cache.RequestCache
-import com.wei.sniffer.cache.SnifferRequest
-import com.wei.sniffer.cache.SnifferRequestLog
-import com.wei.sniffer.cache.SnifferResponse
+import com.wei.sniffer.cache.*
 import okhttp3.Interceptor
 import okhttp3.Response
 import okio.Buffer
@@ -14,21 +11,24 @@ import java.util.concurrent.TimeUnit
 
 class OkHttpSniffer : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
-        val snifferRequestLog = SnifferRequestLog()
-        val snifferRequest = SnifferRequest()
-        val snifferResponse = SnifferResponse()
-        snifferRequestLog.request = snifferRequest
-        snifferRequestLog.response = snifferResponse
+
 
         // 处理请求
         val request = chain.request()
 
-        snifferRequestLog.id = request.hashCode().toString()
-        snifferRequestLog.url = request.url.toUrl()
-        snifferRequest.url = snifferRequestLog.url.toString()
+        val id = request.hashCode().toString()
+        val url = request.url.toUrl()
+        val snifferLog = SnifferLog(
+                id,
+                url,
+                request.method,
+                "-1",
+                SnifferRequest(id, url, RequestState.REQUEST_STATE_LOADING),
+                SnifferResponse(id, url))
 
-        RequestCache.put(snifferRequestLog.id, snifferRequestLog)
-        RequestCache.onSniffListener?.onSniff(snifferRequestLog)
+        snifferLog.request.headers = request.headers.toMultimap()
+        RequestCache.put(snifferLog.id, snifferLog)
+        RequestCache.onSniffListener?.onNotifyDataChanged(snifferLog)
         val startNs = System.nanoTime()
         //处理响应
         val response: Response
@@ -36,14 +36,19 @@ class OkHttpSniffer : Interceptor {
         try {
             response = chain.proceed(request)
         } catch (e: Exception) {
-            snifferResponse.textBody.appendln("END HTTP Error:${e.message}")
+            //出现Error
+            snifferLog.response.body.appendln("Error:${e.message}")
             throw e
         }
         val responseBody = response.body!!
         val headers = response.headers
-        val contentLength = responseBody.contentLength()
-        val bodySize = if (contentLength != -1L) "$contentLength-byte" else "unknown-length"
-        snifferResponse.textBody.appendln("${response.code}${if (response.message.isEmpty()) "" else ' ' + response.message} ${response.request.url} (${TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNs)}ms${", $bodySize body"})")
+        snifferLog.response.contentLength = responseBody.contentLength()
+        snifferLog.response.code = response.code
+        snifferLog.statusCode = response.code.toString()
+        snifferLog.response.message = if (response.message.isEmpty()) "" else ' ' + response.message
+        snifferLog.response.duration = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNs)
+        snifferLog.response.scheme = snifferLog.url.protocol
+        snifferLog.response.headers = response.headers.toMultimap()
 
         val source = responseBody.source()
         source.request(Long.MAX_VALUE) // Buffer the entire body.
@@ -63,20 +68,25 @@ class OkHttpSniffer : Interceptor {
                 ?: StandardCharsets.UTF_8
 
         if (!buffer.isProbablyUtf8()) {
-            snifferResponse.textBody.appendln("END HTTP (binary ${buffer.size}-byte body omitted)")
+            //出现Error
+            snifferLog.response.body.appendln("(binary ${buffer.size}-byte body omitted)")
             return response
         }
 
-        if (contentLength != 0L) {
-            snifferResponse.textBody.appendln(buffer.clone().readString(charset))
+        if (snifferLog.response.contentLength != 0L) {
+            snifferLog.response.body.appendln(buffer.clone().readString(charset))
         }
 
         if (gzippedLength != null) {
-            snifferResponse.textBody.appendln("END HTTP (${buffer.size}-byte, $gzippedLength-gzipped-byte body)")
+            snifferLog.response.body.appendln("(${buffer.size}-byte, $gzippedLength-gzipped-byte body)")
         } else {
-            snifferResponse.textBody.appendln("END HTTP (${buffer.size}-byte body)")
+            snifferLog.response.body.appendln("(${buffer.size}-byte body)")
         }
-        RequestCache.onSniffListener?.onSniff(snifferRequestLog)
+
+        //请求结束
+        snifferLog.request.requestState = RequestState.REQUEST_STATE_FINISHED
+        //通知数据更新
+        RequestCache.onSniffListener?.onNotifyDataChanged(snifferLog)
         return response
     }
 }

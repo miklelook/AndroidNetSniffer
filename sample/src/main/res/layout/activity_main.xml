@@ -24,6 +24,13 @@
             android:text="清空" />
     </LinearLayout>
 
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="#0f0"
+        android:textIsSelectable="true"
+        android:textSize="13sp"
+        android:text="11aadfasdfasdfas1" />
 
     <ScrollView
         android:layout_width="match_parent"

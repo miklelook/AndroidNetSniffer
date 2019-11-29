@@ -12,7 +12,6 @@
         android:layout_height="wrap_content"
         android:padding="3dp"
         android:singleLine="true"
-        android:textColor="@color/console_text"
-        android:textSize="@dimen/console_text"
+        android:textSize="@dimen/sniffer__console_text"
         tools:text="111" />
 </HorizontalScrollView>

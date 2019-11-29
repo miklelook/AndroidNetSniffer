@@ -10,7 +10,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="5dp"
-        android:textColor="@color/console_text"
-        android:textSize="@dimen/console_text"
-        tools:text="adjaklkasdka" />
+        android:textColor="@color/sniffer_console_text"
+        android:textSize="@dimen/sniffer__console_text"
+        tools:text="1-123123-http://www.baidu.com" />
 </ScrollView>
