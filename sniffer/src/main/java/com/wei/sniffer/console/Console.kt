@@ -8,15 +8,18 @@ import android.content.Context
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import android.view.WindowManager
+import android.view.*
 import android.widget.*
 import com.wei.sniffer.R
+import com.wei.sniffer.cache.BodyType
 import com.wei.sniffer.cache.OnSniffListener
 import com.wei.sniffer.cache.RequestCache
 import com.wei.sniffer.cache.SnifferLog
+import com.wei.sniffer.console.adapter.JsonBodyAdapter
+import com.wei.sniffer.console.adapter.TextBodyAdapter
+import com.wei.sniffer.console.adapter.UnknownBodyAdapter
+import com.wei.sniffer.console.view.HeadersView
+import com.wei.sniffer.console.view.ResponseView
 
 
 /**
@@ -134,6 +137,8 @@ class Console {
             //add Headers View
             contentView.addView(HeadersView(context), ViewGroup.LayoutParams(-1, -1))
             //add Request View
+
+            contentView.addView(ResponseView(context), ViewGroup.LayoutParams(-1, -1))
         }
     }
 
@@ -189,7 +194,7 @@ class Console {
         val contentView = rootView.findViewById<FrameLayout>(R.id.fl_content)
         val headersView = contentView.findViewById<HeadersView>(R.id.sniffer_id_headers)
         val requestView = contentView.findViewById<View>(R.id.sniffer_id_request)
-        val responseView = contentView.findViewById<View>(R.id.sniffer_id_response)
+        val responseView = contentView.findViewById<View>(R.id.sniffer_id_response) as? ResponseView
 
         headersView?.notifyDataChanged(snifferLog)
 
@@ -201,16 +206,17 @@ class Console {
 
         if (selectIndex == 2) {
             responseView?.let {
-
+                when (snifferLog?.response?.bodyType) {
+                    BodyType.JSON -> it.baseConsoleAdapter = JsonBodyAdapter(snifferLog)
+                    BodyType.TEXT -> it.baseConsoleAdapter = TextBodyAdapter(snifferLog)
+                    else -> it.baseConsoleAdapter = UnknownBodyAdapter(snifferLog)
+                }
             }
         }
 
         headersView?.visibility = if (selectIndex == 0) View.VISIBLE else View.GONE
         requestView?.visibility = if (selectIndex == 1) View.VISIBLE else View.GONE
         responseView?.visibility = if (selectIndex == 2) View.VISIBLE else View.GONE
-        if (currentTabIndex == selectIndex) {
-            return
-        }
         currentTabIndex = selectIndex
         val tabLayout = rootView.findViewById<LinearLayout>(R.id.ll_tab)
         for (index in 0 until tabLayout.childCount) {
@@ -223,9 +229,23 @@ class Console {
                 childAt.setTextColor(tabLayout.context.resources.getColor(R.color.sniffer_console_text))
             }
 
-            childAt.setOnClickListener {
-                selectTab(rootView, index, snifferLog)
-            }
+            childAt.setOnClickListener(object : View.OnClickListener {
+                var lastTime = 0L
+                override fun onClick(v: View?) {
+                    if (index == currentTabIndex) {
+                        if (index == 2 && System.currentTimeMillis() - lastTime < ViewConfiguration.getDoubleTapTimeout()) {
+                            responseView?.baseConsoleAdapter?.isFormatBody = !(responseView?.baseConsoleAdapter?.isFormatBody
+                                    ?: false)
+                            responseView?.baseConsoleAdapter?.notifyDataChanged()
+                            lastTime = 0
+                        } else {
+                            lastTime = System.currentTimeMillis()
+                        }
+                    } else {
+                        selectTab(rootView, index, snifferLog)
+                    }
+                }
+            })
         }
     }
 
@@ -235,5 +255,38 @@ class Console {
     private fun clear() {
         rootView = null
         context = null
+    }
+
+    /**
+     * v1.0 of the file created on 2019-11-27 by shuxin.wei, email: weishuxin@maoyan.com
+     * description: 请求控制台展示适配器
+     */
+    abstract class BaseConsoleAdapter(var snifferLog: SnifferLog? = null) {
+
+        private lateinit var contentView: View
+        var isFormatBody = false
+
+        /**
+         * 创建展示View
+         */
+        abstract fun onCreateView(parent: View): View
+
+        /**
+         * 数据绑定
+         */
+        abstract fun onBindView(view: View, snifferLog: SnifferLog?)
+
+        /**
+         * 通知View刷新
+         */
+        fun notifyDataChanged() {
+            onBindView(contentView, snifferLog)
+        }
+
+        fun createView(parent: View): View {
+            contentView = onCreateView(parent)
+            return contentView
+        }
+
     }
 }

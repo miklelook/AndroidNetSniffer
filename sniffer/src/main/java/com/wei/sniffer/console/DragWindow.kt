@@ -9,10 +9,11 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
 
-fun WindowManager.initDragWindow(rootView: View,dragView:View): WindowManager.LayoutParams {
+fun WindowManager.initDragWindow(rootView: View, dragView: View): WindowManager.LayoutParams {
     val layoutParams = WindowManager.LayoutParams()
     // 设置LayoutParam
-    layoutParams.width = WindowManager.LayoutParams.WRAP_CONTENT
+    layoutParams.width = rootView.resources.displayMetrics.widthPixels -
+            TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 30f, rootView.resources.displayMetrics).toInt()
     layoutParams.height = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 400f, rootView.resources.displayMetrics).toInt()
     layoutParams.format = PixelFormat.TRANSLUCENT// 支持透明
     // mParams.format = PixelFormat.RGBA_8888;

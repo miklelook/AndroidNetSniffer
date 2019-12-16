@@ -1,4 +1,4 @@
-package com.wei.sniffer.console
+package com.wei.sniffer.console.view
 
 import android.content.Context
 import android.graphics.Typeface

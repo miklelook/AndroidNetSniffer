@@ -36,5 +36,25 @@ data class SnifferLog(
          * 响应信息
          */
         @JvmField var response: SnifferResponse
-) : Serializable {
+) : Serializable
+
+
+enum class BodyType {
+    JSON,
+    TEXT,
+    FORM,
+    IMAGE,
+    FILE,
+    UNKNOWN
+}
+
+fun getBodyTypeByContentType(contentType: String?): BodyType {
+    if (contentType != null) {
+        if (contentType.contains("application/json")) {
+            return BodyType.JSON
+        } else if (contentType.contains("text/")) {
+            return BodyType.TEXT
+        }
+    }
+    return BodyType.UNKNOWN
 }

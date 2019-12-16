@@ -26,7 +26,12 @@ data class SnifferRequest(
         /**
          * 响应头
          */
-        @JvmField var headers: Map<String, List<String>>? = null
+        @JvmField var headers: Map<String, List<String>>? = null,
+
+        /**
+         * 请求体类型
+         */
+        @JvmField var bodyType: BodyType? = null
 
 ) : Serializable
 

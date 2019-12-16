@@ -1,6 +1,7 @@
 package com.wei.sniffer.okhttp
 
 import com.wei.sniffer.cache.*
+import com.wei.sniffer.utils.JsonUtils
 import okhttp3.Interceptor
 import okhttp3.Request
 import okhttp3.Response
@@ -8,7 +9,9 @@ import okio.Buffer
 import okio.GzipSource
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
+import java.util.*
 import java.util.concurrent.TimeUnit
+import kotlin.collections.HashMap
 
 class OkHttpSniffer : Interceptor {
     var startNs: Long? = null
@@ -36,7 +39,9 @@ class OkHttpSniffer : Interceptor {
             snifferLog.response.duration = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - (startNs
                     ?: 0L))
             snifferLog.response.scheme = snifferLog.url.protocol
-            snifferLog.response.headers = response.headers.toMultimap()
+            snifferLog.response.headers = HashMap(response.headers.toMultimap())
+            snifferLog.response.bodyType = getBodyTypeByContentType(response.header("Content-Type", null))
+
 
             val source = responseBody.source()
             source.request(Long.MAX_VALUE) // Buffer the entire body.
@@ -57,18 +62,24 @@ class OkHttpSniffer : Interceptor {
 
             if (!buffer.isProbablyUtf8()) {
                 //出现Error
-                snifferLog.response.body.appendln("(binary ${buffer.size}-byte body omitted)")
+                snifferLog.response.headers?.put("body-size", Collections.singletonList("${buffer.size}-byte body omitted"))
                 return
             }
 
             if (snifferLog.response.contentLength != 0L) {
-                snifferLog.response.body.appendln(buffer.clone().readString(charset))
+                snifferLog.response.body = buffer.clone().readString(charset)
             }
 
             if (gzippedLength != null) {
-                snifferLog.response.body.appendln("(${buffer.size}-byte, $gzippedLength-gzipped-byte body)")
+                snifferLog.response.headers?.put("body-size", Collections.singletonList("${buffer.size}-byte, $gzippedLength-gzipped-byte body"))
             } else {
-                snifferLog.response.body.appendln("(${buffer.size}-byte body)")
+                snifferLog.response.headers?.put("body-size", Collections.singletonList("${buffer.size}-byte"))
+            }
+
+            if (snifferLog.response.bodyType == BodyType.JSON) {
+                snifferLog.response.formatBody = JsonUtils.formatJsonSafe(snifferLog.response.body, JsonUtils.JsonStringBuilder.Step.TWO_SPACES)
+            } else {
+                snifferLog.response.formatBody = snifferLog.response.body
             }
 
             //请求结束

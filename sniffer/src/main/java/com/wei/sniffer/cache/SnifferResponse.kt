@@ -27,7 +27,12 @@ data class SnifferResponse(
         /**
          * 请求响应体
          */
-        @JvmField var body: StringBuilder = StringBuilder(),
+        @JvmField var body: String = "",
+
+        /**
+         * 格式化后的响应体
+         */
+        @JvmField var formatBody: String = "",
 
         /**
          * 请求体大小
@@ -52,7 +57,12 @@ data class SnifferResponse(
         /**
          * 响应头
          */
-        @JvmField var headers: Map<String, List<String>>? = null
+        @JvmField var headers: HashMap<String, List<String>>? = null,
+
+        /**
+         * 请求体类型
+         */
+        @JvmField var bodyType: BodyType? = null
 
 ) : Serializable {
 

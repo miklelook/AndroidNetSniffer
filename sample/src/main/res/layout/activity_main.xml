@@ -6,6 +6,7 @@
     android:orientation="vertical">
 
     <LinearLayout
+        android:id="@+id/ll_tab"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
@@ -27,22 +28,18 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:text="11aadfasdfasdfas1"
         android:textColor="#0f0"
         android:textIsSelectable="true"
-        android:textSize="13sp"
-        android:text="11aadfasdfasdfas1" />
+        android:textSize="13sp" />
 
-    <ScrollView
+
+    <TextView
+        android:id="@+id/et_result"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
-
-        <TextView
-            android:id="@+id/et_result"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textColor="#0f0"
-            android:textSize="11sp"
-            tools:text="111" />
-    </ScrollView>
+        android:layout_height="match_parent"
+        android:textColor="#0f0"
+        android:textSize="11sp"
+        tools:text="111" />
 
 </LinearLayout>
