@@ -5,10 +5,12 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import com.wei.sniffer.R
-import com.wei.sniffer.cache.SnifferLog
+import com.wei.sniffer.cache.BaseSnifferDetail
+import com.wei.sniffer.cache.SnifferRequest
+import com.wei.sniffer.cache.SnifferResponse
 import com.wei.sniffer.console.Console
 
-class UnknownBodyAdapter(snifferLog: SnifferLog?) : Console.BaseConsoleAdapter(snifferLog) {
+class UnknownBodyAdapter(snifferLog: BaseSnifferDetail?) : Console.BaseConsoleAdapter(snifferLog) {
     override fun onCreateView(parent: View): View {
         val textView = TextView(parent.context)
         textView.layoutParams = ViewGroup.LayoutParams(-1, -1)
@@ -18,7 +20,7 @@ class UnknownBodyAdapter(snifferLog: SnifferLog?) : Console.BaseConsoleAdapter(s
         return textView
     }
 
-    override fun onBindView(view: View, snifferLog: SnifferLog?) {
+    override fun onBindView(view: View, baseSnifferDetail: BaseSnifferDetail?) {
         (view as TextView).text = "暂不支持"
     }
 

@@ -25,7 +25,6 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     testImplementation 'junit:junit:4.12'
-
     implementation project(':sniffer-okhttp')
     implementation project(':sniffer')
     implementation 'com.squareup.okhttp3:okhttp:4.2.2'

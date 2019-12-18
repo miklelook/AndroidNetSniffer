@@ -3,13 +3,14 @@ package com.wei.sniffer
 import android.app.Activity
 import android.os.Bundle
 import android.text.method.ScrollingMovementMethod
-import android.view.MotionEvent
 import android.view.View
 import com.wei.sniffer.console.Console
 import com.wei.sniffer.okhttp.OkHttpLogInterceptor
 import com.wei.sniffer.okhttp.OkHttpSniffer
 import kotlinx.android.synthetic.main.activity_main.*
 import okhttp3.*
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.IOException
 
 /**
@@ -68,7 +69,30 @@ class MainActivity : Activity() {
                         @Throws(IOException::class)
                         override fun onResponse(call: Call, response: Response) {
                             runOnUiThread {
-//                                et_result.text = "正在完成..."
+                                et_result.text = "正在完成..."
+                            }
+                        }
+                    })
+
+            OkHttpClient.Builder()
+                    .addNetworkInterceptor(OkHttpLogInterceptor().apply {
+                        level = OkHttpLogInterceptor.Level.BODY
+                    })
+                    .addNetworkInterceptor(OkHttpSniffer())
+                    .build()
+                    .newCall(Request.Builder().method("POST", "{\"userName\":\"weishuxin\"}".toRequestBody("application/json".toMediaType()))
+                            .url("http://172.19.167.91:7300/mock/5d78a6a96460dbf9f53e2290/api/product/wish.json").build())
+                    .enqueue(object : Callback {
+                        override fun onFailure(call: Call, e: IOException) {
+                            runOnUiThread {
+                                et_result.text = "正在失败..."
+                            }
+                        }
+
+                        @Throws(IOException::class)
+                        override fun onResponse(call: Call, response: Response) {
+                            runOnUiThread {
+                                et_result.text = "正在完成..."
                             }
                         }
                     })

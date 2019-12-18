@@ -11,14 +11,13 @@ import android.os.Looper
 import android.view.*
 import android.widget.*
 import com.wei.sniffer.R
-import com.wei.sniffer.cache.BodyType
-import com.wei.sniffer.cache.OnSniffListener
-import com.wei.sniffer.cache.RequestCache
-import com.wei.sniffer.cache.SnifferLog
+import com.wei.sniffer.cache.*
 import com.wei.sniffer.console.adapter.JsonBodyAdapter
 import com.wei.sniffer.console.adapter.TextBodyAdapter
 import com.wei.sniffer.console.adapter.UnknownBodyAdapter
+import com.wei.sniffer.console.view.BaseBodyView
 import com.wei.sniffer.console.view.HeadersView
+import com.wei.sniffer.console.view.RequestView
 import com.wei.sniffer.console.view.ResponseView
 
 
@@ -136,8 +135,11 @@ class Console {
             val context = contentView.context
             //add Headers View
             contentView.addView(HeadersView(context), ViewGroup.LayoutParams(-1, -1))
-            //add Request View
 
+            //add Request View
+            contentView.addView(RequestView(context), ViewGroup.LayoutParams(-1, -1))
+
+            //add Response View
             contentView.addView(ResponseView(context), ViewGroup.LayoutParams(-1, -1))
         }
     }
@@ -193,24 +195,17 @@ class Console {
     private fun selectTab(rootView: View, selectIndex: Int, snifferLog: SnifferLog?) {
         val contentView = rootView.findViewById<FrameLayout>(R.id.fl_content)
         val headersView = contentView.findViewById<HeadersView>(R.id.sniffer_id_headers)
-        val requestView = contentView.findViewById<View>(R.id.sniffer_id_request)
+        val requestView = contentView.findViewById<RequestView>(R.id.sniffer_id_request)
         val responseView = contentView.findViewById<View>(R.id.sniffer_id_response) as? ResponseView
 
         headersView?.notifyDataChanged(snifferLog)
 
-        if (selectIndex == 1) {
-            requestView?.let {
-
+        when (selectIndex) {
+            1 -> {
+                requestView?.setBodyAdapter(snifferLog?.request?.bodyType, snifferLog?.request)
             }
-        }
-
-        if (selectIndex == 2) {
-            responseView?.let {
-                when (snifferLog?.response?.bodyType) {
-                    BodyType.JSON -> it.baseConsoleAdapter = JsonBodyAdapter(snifferLog)
-                    BodyType.TEXT -> it.baseConsoleAdapter = TextBodyAdapter(snifferLog)
-                    else -> it.baseConsoleAdapter = UnknownBodyAdapter(snifferLog)
-                }
+            2 -> {
+                responseView?.setBodyAdapter(snifferLog?.response?.bodyType, snifferLog?.response)
             }
         }
 
@@ -233,7 +228,12 @@ class Console {
                 var lastTime = 0L
                 override fun onClick(v: View?) {
                     if (index == currentTabIndex) {
-                        if (index == 2 && System.currentTimeMillis() - lastTime < ViewConfiguration.getDoubleTapTimeout()) {
+                        if (index == 1 && System.currentTimeMillis() - lastTime < ViewConfiguration.getDoubleTapTimeout()) {
+                            requestView?.baseConsoleAdapter?.isFormatBody = !(requestView?.baseConsoleAdapter?.isFormatBody
+                                    ?: false)
+                            requestView?.baseConsoleAdapter?.notifyDataChanged()
+                            lastTime = 0
+                        } else if (index == 2 && System.currentTimeMillis() - lastTime < ViewConfiguration.getDoubleTapTimeout()) {
                             responseView?.baseConsoleAdapter?.isFormatBody = !(responseView?.baseConsoleAdapter?.isFormatBody
                                     ?: false)
                             responseView?.baseConsoleAdapter?.notifyDataChanged()
@@ -249,6 +249,14 @@ class Console {
         }
     }
 
+    private fun BaseBodyView.setBodyAdapter(bodyType: BodyType?, snifferLog: BaseSnifferDetail?) {
+        baseConsoleAdapter = when (bodyType) {
+            BodyType.JSON -> JsonBodyAdapter(snifferLog)
+            BodyType.TEXT -> TextBodyAdapter(snifferLog)
+            else -> UnknownBodyAdapter(snifferLog)
+        }
+    }
+
     /**
      * 清除数据
      */
@@ -261,10 +269,10 @@ class Console {
      * v1.0 of the file created on 2019-11-27 by shuxin.wei, email: weishuxin@maoyan.com
      * description: 请求控制台展示适配器
      */
-    abstract class BaseConsoleAdapter(var snifferLog: SnifferLog? = null) {
+    abstract class BaseConsoleAdapter(private var snifferDetail: BaseSnifferDetail? = null) {
 
         private lateinit var contentView: View
-        var isFormatBody = false
+        var isFormatBody = true
 
         /**
          * 创建展示View
@@ -274,13 +282,13 @@ class Console {
         /**
          * 数据绑定
          */
-        abstract fun onBindView(view: View, snifferLog: SnifferLog?)
+        abstract fun onBindView(view: View, baseSnifferDetail: BaseSnifferDetail?)
 
         /**
          * 通知View刷新
          */
         fun notifyDataChanged() {
-            onBindView(contentView, snifferLog)
+            onBindView(contentView, snifferDetail)
         }
 
         fun createView(parent: View): View {
@@ -288,5 +296,20 @@ class Console {
             return contentView
         }
 
+        protected fun setViewScroll(view: View, parentView: View) {
+            if (isFormatBody) {
+                if (view.parent == parentView) {
+                    (parentView as ViewGroup).removeView(view)
+                    val scrollView = HorizontalScrollView(parentView.context)
+                    scrollView.addView(view)
+                    parentView.addView(scrollView, -1, -1)
+                }
+            } else {
+                if (view.parent != parentView) {
+                    (view.parent as ViewGroup).removeView(view)
+                    (parentView as ViewGroup).addView(view, -1, -1)
+                }
+            }
+        }
     }
 }

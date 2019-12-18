@@ -1,6 +1,5 @@
 package com.wei.sniffer.cache
 
-import java.io.Serializable
 import java.net.URL
 
 
@@ -9,15 +8,10 @@ import java.net.URL
  * description: 请求响应信息
  */
 data class SnifferResponse(
-        /**
-         * 请求ID
-         */
-        @JvmField var id: String,
 
-        /**
-         * 请求地址
-         */
-        @JvmField var url: URL,
+        @JvmField override var id: String,
+
+        @JvmField override var url: URL,
 
         /**
          * 请求类型
@@ -64,7 +58,7 @@ data class SnifferResponse(
          */
         @JvmField var bodyType: BodyType? = null
 
-) : Serializable {
+) : BaseSnifferDetail(id, url) {
 
     /**
      * 获取响应体大小描述文案，将[contentLength]格式化成字符串返回

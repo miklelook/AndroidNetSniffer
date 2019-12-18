@@ -100,7 +100,25 @@ class OkHttpSniffer : Interceptor {
                 SnifferRequest(id, url, RequestState.REQUEST_STATE_LOADING),
                 SnifferResponse(id, url))
 
-        snifferLog.request.headers = request.headers.toMultimap()
+        val snifferRequest = snifferLog.request
+        snifferRequest.headers = request.headers.toMultimap()
+        if (snifferLog.method.equals("GET", true)
+                || snifferLog.method.equals("DELETE", true)) {
+            snifferRequest.bodyType = BodyType.TEXT
+            snifferRequest.body = url.query ?: ""
+            snifferRequest.formatBody = url.query?.replace('&', '\n') ?: ""
+        } else if (snifferLog.method.equals("POST", true)
+                || snifferLog.method.equals("PUT", true)) {
+            snifferRequest.bodyType = getBodyTypeByContentType(request.header("Content-Type"))
+            val buffer = Buffer()
+            request.body?.writeTo(buffer)
+            snifferRequest.body = buffer.readUtf8()
+            if (snifferRequest.bodyType == BodyType.JSON) {
+                snifferRequest.formatBody = JsonUtils.formatJsonSafe(snifferRequest.body, JsonUtils.JsonStringBuilder.Step.TWO_SPACES)
+            } else {
+                snifferRequest.formatBody = snifferRequest.body
+            }
+        }
         RequestCache.put(snifferLog.id, snifferLog)
         RequestCache.onSniffListener?.onNotifyDataChanged(snifferLog)
         return snifferLog

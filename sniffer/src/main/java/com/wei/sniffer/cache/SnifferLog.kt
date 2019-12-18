@@ -1,6 +1,5 @@
 package com.wei.sniffer.cache
 
-import java.io.Serializable
 import java.net.URL
 
 /**
@@ -8,14 +7,8 @@ import java.net.URL
  * description: 保存请求的所有信息
  */
 data class SnifferLog(
-        /**
-         * 请求ID
-         */
-        @JvmField var id: String,
-        /**
-         * 请求地址
-         */
-        @JvmField var url: URL,
+        @JvmField override var id: String,
+        @JvmField override var url: URL,
 
         /**
          * 请求类型
@@ -36,7 +29,7 @@ data class SnifferLog(
          * 响应信息
          */
         @JvmField var response: SnifferResponse
-) : Serializable
+) : BaseSnifferDetail(id, url)
 
 
 enum class BodyType {
