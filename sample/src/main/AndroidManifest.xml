@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:dist="http://schemas.android.com/apk/distribution"
-    package="com.wei.sniffer">
+    package="com.planb.sniffer">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
@@ -15,7 +15,7 @@
         android:theme="@style/AppTheme">
 
 
-        <activity android:name="com.wei.sniffer.MainActivity">
+        <activity android:name="com.planb.sniffer.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <action android:name="android.intent.action.VIEW" />
