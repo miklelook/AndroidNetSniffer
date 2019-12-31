@@ -9,6 +9,7 @@ import com.planb.sniffer.cache.BaseSnifferDetail
 import com.planb.sniffer.cache.SnifferRequest
 import com.planb.sniffer.cache.SnifferResponse
 import com.planb.sniffer.console.Console
+import com.planb.sniffer.console.view.setClipListener
 
 class TextBodyAdapter(snifferLog: BaseSnifferDetail?) : Console.BaseConsoleAdapter(snifferLog) {
     override fun onCreateView(parent: View): View {
@@ -25,7 +26,7 @@ class TextBodyAdapter(snifferLog: BaseSnifferDetail?) : Console.BaseConsoleAdapt
 
     override fun onBindView(view: View, baseSnifferDetail: BaseSnifferDetail?) {
         val textView = view.findViewWithTag<TextView>("tv_content")
-
+        textView.setClipListener()
         baseSnifferDetail?.let {
             if (baseSnifferDetail is SnifferResponse) {
                 textView.text = if (isFormatBody) baseSnifferDetail.formatBody else baseSnifferDetail.body

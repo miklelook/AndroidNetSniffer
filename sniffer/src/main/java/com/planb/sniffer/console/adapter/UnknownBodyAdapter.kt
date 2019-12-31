@@ -21,5 +21,4 @@ class UnknownBodyAdapter(snifferLog: BaseSnifferDetail?) : Console.BaseConsoleAd
     override fun onBindView(view: View, baseSnifferDetail: BaseSnifferDetail?) {
         (view as TextView).text = "暂不支持"
     }
-
 }

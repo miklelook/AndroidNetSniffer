@@ -1,5 +1,7 @@
 package com.planb.sniffer.console.view
 
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.graphics.Typeface
 import android.text.InputType
@@ -8,8 +10,10 @@ import android.util.TypedValue
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import com.planb.sniffer.R
 import com.planb.sniffer.cache.SnifferLog
+
 
 class HeadersView : LinearLayout {
     private val keyValueFormat = "%s: %s"
@@ -90,9 +94,20 @@ class HeadersView : LinearLayout {
             item.setPadding(0, 0, 0, 0)
             item.setTextAppearance(context, R.style.SnifferTabItem)
         }
+        item.setClipListener()
         item.text = String.format(keyValueFormat, key, value)
         addView(item, MarginLayoutParams(-1, -2).apply {
             leftMargin = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 15f, resources.displayMetrics).toInt()
         })
+    }
+}
+
+fun TextView.setClipListener() {
+    setOnLongClickListener {
+        it.requestFocus()
+        val cm = it.context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        cm.primaryClip = ClipData.newPlainText("Sniffer", text)
+        Toast.makeText(it.context, "内容已复制", Toast.LENGTH_SHORT).show()
+        true
     }
 }

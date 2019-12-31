@@ -1,6 +1,5 @@
 package com.planb.sniffer.console.adapter
 
-import android.annotation.SuppressLint
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
@@ -12,8 +11,7 @@ import com.planb.sniffer.cache.SnifferResponse
 import com.planb.sniffer.console.Console
 import com.planb.sniffer.console.view.setClipListener
 
-@SuppressLint("ClickableViewAccessibility")
-class JsonBodyAdapter(baseSnifferDetail: BaseSnifferDetail?) : Console.BaseConsoleAdapter(baseSnifferDetail) {
+class FileBodyAdapter(baseSnifferDetail: BaseSnifferDetail?) : Console.BaseConsoleAdapter(baseSnifferDetail) {
     override fun onCreateView(parent: View): View {
         val textView = TextView(parent.context)
         textView.layoutParams = ViewGroup.LayoutParams(-1, -1)
@@ -31,15 +29,11 @@ class JsonBodyAdapter(baseSnifferDetail: BaseSnifferDetail?) : Console.BaseConso
         textView.setClipListener()
         baseSnifferDetail?.let {
             if (baseSnifferDetail is SnifferResponse) {
-                textView.text = if (isFormatBody) baseSnifferDetail.formatBody else baseSnifferDetail.body
+                textView.text = baseSnifferDetail.body
             } else if (baseSnifferDetail is SnifferRequest) {
-                textView.text = if (isFormatBody) baseSnifferDetail.formatBody else baseSnifferDetail.body
+                textView.text = baseSnifferDetail.body
             }
-
             setViewScroll(textView, view)
-        }
-        if (baseSnifferDetail == null) {
-            textView.text = ""
         }
     }
 }

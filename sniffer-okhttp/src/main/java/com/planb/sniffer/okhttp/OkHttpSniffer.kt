@@ -63,6 +63,7 @@ class OkHttpSniffer : Interceptor {
             if (!buffer.isProbablyUtf8()) {
                 //出现Error
                 snifferLog.response.headers?.put("body-size", Collections.singletonList("${buffer.size}-byte body omitted"))
+
                 return
             }
 

@@ -12,6 +12,7 @@ import android.view.*
 import android.widget.*
 import com.planb.sniffer.R
 import com.planb.sniffer.cache.*
+import com.planb.sniffer.console.adapter.FileBodyAdapter
 import com.planb.sniffer.console.adapter.JsonBodyAdapter
 import com.planb.sniffer.console.adapter.TextBodyAdapter
 import com.planb.sniffer.console.adapter.UnknownBodyAdapter
@@ -250,6 +251,9 @@ class Console {
         baseConsoleAdapter = when (bodyType) {
             BodyType.JSON -> JsonBodyAdapter(snifferLog)
             BodyType.TEXT -> TextBodyAdapter(snifferLog)
+            BodyType.FORM -> TextBodyAdapter(snifferLog)
+            BodyType.FILE -> FileBodyAdapter(snifferLog)
+            BodyType.IMAGE -> FileBodyAdapter(snifferLog)
             else -> UnknownBodyAdapter(snifferLog)
         }
     }
